@@ -1,0 +1,15 @@
+﻿// Decompiled with JetBrains decompiler
+// Type: ReflectionProbeHelper
+// Assembly: ProEra.Game, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+// MVID: A251AB60-A6EC-4F45-B61A-221E02FF094C
+// Assembly location: C:\Users\nicke\Desktop\Folders\pro era modding again lol\pcversion\NFL Pro Era\NFL PRO ERA_Data\Managed\ProEra.Game.dll
+
+using UnityEngine;
+
+public class ReflectionProbeHelper : MonoBehaviour
+{
+  [SerializeField]
+  private ReflectionProbe _probe;
+
+  private void Awake() => this._probe.intensity = 0.1f;
+}

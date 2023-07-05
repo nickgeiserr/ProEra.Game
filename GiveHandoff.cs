@@ -1,0 +1,77 @@
+﻿// Decompiled with JetBrains decompiler
+// Type: GiveHandoff
+// Assembly: ProEra.Game, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+// MVID: A251AB60-A6EC-4F45-B61A-221E02FF094C
+// Assembly location: C:\Users\nicke\Desktop\Folders\pro era modding again lol\pcversion\NFL Pro Era\NFL PRO ERA_Data\Managed\ProEra.Game.dll
+
+using BehaviorDesigner.Runtime;
+using BehaviorDesigner.Runtime.Tasks;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class GiveHandoff : BehaviorDesigner.Runtime.Tasks.Action
+{
+  public SharedGameObject ownerPlayer;
+  private PlayerAI ownerPlayerAI;
+  public SharedInt currentPlayAssignment;
+  private GiveHandoffAssignment playerRoute;
+  private List<Vector3> actualRoutePoints;
+  private PlayersManager playersMan;
+  private MatchManager matchManager;
+  private PlayManager playMan;
+  private Transform trans;
+  private AnimatorCommunicator locoAgent;
+  private float targetUpdateTime;
+  private bool eligibleForHandoff;
+  private const float TARGETDURATION = 0.5f;
+
+  public override void OnStart()
+  {
+    if (!(bool) (Object) this.ownerPlayer.Value)
+      return;
+    this.ownerPlayerAI = this.ownerPlayer.Value.GetComponent<PlayerAI>();
+    this.playerRoute = this.ownerPlayerAI.CurrentPlayAssignment as GiveHandoffAssignment;
+    this.actualRoutePoints = new List<Vector3>();
+    if (this.playerRoute != null)
+    {
+      this.ownerPlayerAI.SetPlayerRouteForAssignment((RunPathAssignment) this.playerRoute, this.actualRoutePoints, 1f);
+      this.DebugDrawRoute();
+    }
+    this.targetUpdateTime = 0.0f;
+    this.matchManager = MatchManager.instance;
+    this.playersMan = this.matchManager.playersManager;
+    this.playMan = MatchManager.instance.playManager;
+    this.locoAgent = this.ownerPlayerAI.animatorCommunicator;
+    this.trans = this.ownerPlayerAI.trans;
+  }
+
+  public override TaskStatus OnUpdate()
+  {
+    if (!(bool) (Object) this.ownerPlayerAI || (Object) this.ownerPlayerAI != (Object) Game.OffensiveQB || Game.IsTurnover && this.ownerPlayerAI.onOffense || this.ownerPlayerAI.IsTackled)
+      return TaskStatus.Failure;
+    if ((Object) this.playersMan.ballHolderScript == (Object) this.playMan.handOffTarget)
+      return TaskStatus.Success;
+    Game.OffensiveQB.RequestHandoff();
+    int num = this.playersMan.CenterBlockEnabled ? 1 : 0;
+    return TaskStatus.Running;
+  }
+
+  public override void OnEnd()
+  {
+    base.OnEnd();
+    if (!((Object) this.ownerPlayerAI != (Object) null))
+      return;
+    this.ownerPlayerAI.animatorCommunicator.SetLocomotionStyle(ELocomotionStyle.Regular);
+    this.ownerPlayerAI.EndCurrentAssignment();
+  }
+
+  private void DebugDrawRoute()
+  {
+    Vector3 start = this.ownerPlayerAI.trans.position;
+    foreach (Vector3 actualRoutePoint in this.actualRoutePoints)
+    {
+      Debug.DrawLine(start, actualRoutePoint, Color.green, 8f);
+      start = actualRoutePoint;
+    }
+  }
+}
